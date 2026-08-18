@@ -1,4 +1,4 @@
-# 🚚 Deliveroo Frontend
+#  Deliveroo Frontend
 
 A modern courier delivery web application built with **React** and **Redux Toolkit** that enables customers to create and manage parcel deliveries while allowing administrators to monitor and update delivery progress.
 
@@ -6,7 +6,7 @@ This repository contains the **frontend implementation** of the Deliveroo projec
 
 ---
 
-## 📖 Project Overview
+##  Project Overview
 
 Deliveroo is a courier service platform that allows users to send parcels from one location to another.
 
@@ -30,7 +30,7 @@ The application also integrates Google Maps to visualize delivery routes and cal
 
 ---
 
-# 🎯 Project Objectives
+#  Project Objectives
 
 - Build a clean and responsive user interface
 - Implement modern React architecture
@@ -40,7 +40,7 @@ The application also integrates Google Maps to visualize delivery routes and cal
 
 ---
 
-# 👥 Team Workflow
+#  Team Workflow
 
 The project follows the **GitHub Flow** workflow.
 
@@ -164,7 +164,7 @@ Only merge **development → main** when a project milestone is complete.
 
 ---
 
-# 📂 Frontend Folder Structure
+#  Frontend Folder Structure
 
 ```
 src/
@@ -213,7 +213,7 @@ src/
 
 ---
 
-# 📄 Application Pages
+#  Application Pages
 
 ## Public
 
@@ -248,7 +248,7 @@ src/
 
 
 
-# 👤 User Stories
+#  User Stories
 
 ## Customer
 
@@ -281,7 +281,7 @@ As an administrator, I want to:
 
 ---
 
-# 🛠 Technology Stack
+#  Technology Stack
 
 ## Frontend
 
@@ -350,7 +350,7 @@ Backend
 
 ---
 
-# 📱 Responsive Design
+#  Responsive Design
 
 The application follows a **mobile-first** approach and is optimized for:
 
@@ -360,7 +360,7 @@ The application follows a **mobile-first** approach and is optimized for:
 
 ---
 
-# 🎨 Design
+#  Design
 
 Wireframes and UI mockups will be designed using **Figma** before implementation.
 
@@ -374,19 +374,8 @@ Design goals include:
 
 ---
 
-# 📌 Coding Standards
 
-- Use functional React components
-- Use hooks instead of class components
-- Keep components reusable
-- Follow consistent naming conventions
-- Use meaningful commit messages
-- Avoid large pull requests
-- Write clean, maintainable code
-
----
-
-# 🤝 Contribution Guidelines
+#  Contribution Guidelines
 
 1. Pull the latest changes from `development`.
 2. Create a new feature branch.
@@ -398,7 +387,7 @@ Design goals include:
 
 ---
 
-# 📅 Development Phases
+#  Development Phases
 
 ## Phase 1
 
@@ -432,6 +421,8 @@ Design goals include:
 
 ---
 
-# 📜 License
-
-This project is developed for educational purposes as part of a full-stack software engineering program.
+#  Contributors
+- Allan Kimani
+- Deogracious Moriasi
+- Victor Mwangi
+- Wayne Kiptoo
