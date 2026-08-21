@@ -1,9 +1,9 @@
 // pages/Login.jsx
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Truck, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { Truck, Mail} from 'lucide-react';
 
-const Login = () => {
+const ForgotPassword = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -25,7 +25,7 @@ const Login = () => {
             <Truck className="h-12 w-12 text-blue-600" />
             <p className='text-l font-bold'>Deliveroo</p>
           </div>
-          <h1 className="text-2xl font-bold text-slate-900">Welcome Back</h1>
+          <h1 className="text-2xl font-bold text-slate-900">Forgot Password</h1>
           <p className="text-slate-600 text-sm">Access your logistics and delivery hub</p>
         </div>
 
@@ -45,50 +45,20 @@ const Login = () => {
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={formData.password}
-                onChange={(e) => setFormData({...formData, password: e.target.value})}
-                className="w-full pl-10 pr-12 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="••••••••"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-              >
-                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-              </button>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between text-sm">
-            <label className="flex items-center gap-2">
-              <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
-              <span className="text-slate-600">Remember me</span>
-            </label>
-            <button type="button" className="text-blue-600 hover:underline">
-              Forgot password?
-            </button>
-          </div>
+          
 
           <button
             type="submit"
             className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-medium transition-colors"
           >
-            Sign In
+            Submit
           </button>
         </form>
 
         <p className="text-center text-sm text-slate-600 mt-6">
-          Don't have an account?{' '}
-          <Link to="/register" className="text-blue-600 hover:underline font-medium">
-            Sign up
+          Already have an account?{' '}
+          <Link to="/login" className="text-blue-600 hover:underline font-medium">
+            Login
           </Link>
         </p>
       </div>
@@ -96,4 +66,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default ForgotPassword;

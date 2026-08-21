@@ -5,6 +5,7 @@ import ordersReducer from "./slices/ordersSlice";
 import adminReducer from "./slices/adminSlice";
 import mapReducer from "./slices/mapSlice";
 import notificationReducer from "./slices/notificationSlice";
+import parcelReducer from "./slices/parcelSlice";
 
 export const store = configureStore({
   reducer: {
@@ -13,5 +14,6 @@ export const store = configureStore({
     admin: adminReducer,
     map: mapReducer,
     notifications: notificationReducer,
+    parcels: parcelReducer,
   },
 });
