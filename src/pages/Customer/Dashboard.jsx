@@ -1,6 +1,13 @@
+import DeliveryMap from "../../components/maps/DeliveryMap";
+
 function CustomerDashboard() {
-  return <h1>Customer Dashboard</h1>;
+  return (
+    <div>
+      <h1>Customer Dashboard</h1>
+
+      <DeliveryMap />
+    </div>
+  );
 }
 
 export default CustomerDashboard;
-
