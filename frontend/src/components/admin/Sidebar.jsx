@@ -49,12 +49,7 @@ const AdminSidebar = ({ activePage, setActivePage }) => {
         lg:relative lg:translate-x-0 lg:w-20 xl:w-64
         ${isMobileOpen ? 'translate-x-0 w-64' : '-translate-x-full w-64 lg:translate-x-0'}
       `}>
-        {/* Brand */}
-        <div className="flex items-center gap-3 px-4 py-6 border-b border-slate-200">
-          <Truck className="h-8 w-8 text-blue-600 flex-shrink-0" />
-          <span className="hidden xl:inline font-bold text-xl text-blue-600">Deliveroo</span>
-          <span className="xl:hidden font-bold text-xl text-blue-600">S</span>
-        </div>
+        
 
         {/* User Profile */}
         
