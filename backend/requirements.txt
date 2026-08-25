@@ -1,0 +1,14 @@
+Flask
+Flask-SQLAlchemy
+Flask-Migrate
+Flask-Marshmallow
+marshmallow-sqlalchemy
+Flask-JWT-Extended
+Flask-Bcrypt
+Flask-Mail
+Flask-Cors
+psycopg2-binary
+python-dotenv
+pytest
+pytest-flask
+gunicorn
