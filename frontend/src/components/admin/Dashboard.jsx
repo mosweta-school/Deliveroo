@@ -1,9 +1,8 @@
-// components/AdminDashboard.jsx
 import React from 'react';
-import Sidebar from '../../features/admin/Sidebar';
-import StatCard from '../../features/admin/StatCard';
-import BarChart from '../../features/admin/BarChart';
-import ActivityFeed from '../../features/admin/ActivityFeed';
+import Sidebar from './Sidebar';
+import StatCard from './StatCard';
+import BarChart from './BarChart';
+import ActivityFeed from './ActivityFeed';
 import { 
   LayoutDashboard, 
   Truck, 
@@ -15,7 +14,7 @@ import {
   TrendingUp
 } from 'lucide-react';
 
-const AdminDashboard = () => {
+const Dashboard = () => {
   const stats = [
     {
       id: 1,
@@ -109,8 +108,8 @@ const AdminDashboard = () => {
   ];
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
-      <Sidebar />
+    
+      
       
       <main className="flex-1 p-4 md:p-6 lg:p-8">
         {/* Page Header */}
@@ -165,8 +164,8 @@ const AdminDashboard = () => {
           </div>
         </div>
       </main>
-    </div>
+    
   );
 };
 
-export default AdminDashboard;
+export default Dashboard;

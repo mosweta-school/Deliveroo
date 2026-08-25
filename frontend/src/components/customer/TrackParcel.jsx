@@ -38,8 +38,8 @@ const TrackParcel = () => {
     destination: 'Kisumu',
     weight: '2.5kg',
     category: '1-5kg',
-    createdAt: '2024-09-28T10:00:00Z',
-    estimatedDelivery: '2024-09-30T18:00:00Z',
+    createdAt: '2026-09-28T10:00:00Z',
+    estimatedDelivery: '2026-09-30T18:00:00Z',
     currentLocation: 'Nakuru',
     distance: '320 km',
     duration: '6 hours',
@@ -47,19 +47,19 @@ const TrackParcel = () => {
     trackingHistory: [
       {
         status: 'Order Created',
-        timestamp: '2024-09-28T10:00:00Z',
+        timestamp: '2026-09-28T10:00:00Z',
         location: 'Nairobi CBD',
         description: 'Parcel order has been created and is awaiting pickup'
       },
       {
         status: 'Picked Up',
-        timestamp: '2024-09-28T12:00:00Z',
+        timestamp: '2026-09-28T12:00:00Z',
         location: 'Nairobi CBD',
         description: 'Parcel has been picked up by courier'
       },
       {
         status: 'In Transit',
-        timestamp: '2024-09-28T14:00:00Z',
+        timestamp: '2026-09-28T14:00:00Z',
         location: 'Nakuru',
         description: 'Parcel is currently in transit to destination'
       }
