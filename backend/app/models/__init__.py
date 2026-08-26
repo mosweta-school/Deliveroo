@@ -19,3 +19,7 @@ in `flask db migrate --autogenerate`, even though it inherits from db.Model.
 """
 
 # Member model imports go below this line:
+from app.models.notification import Notification
+from app.models.status_history import StatusHistory
+
+__all__ = ["Notification", "StatusHistory"]
