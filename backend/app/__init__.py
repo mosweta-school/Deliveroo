@@ -33,18 +33,10 @@ def create_app(config_name: str | None = None) -> Flask:
     # Ensures every model is registered with db.metadata before Flask-Migrate runs
     from app import models  # noqa: F401
 
-    # --- Blueprints ---
-    # Each member registers their own blueprint here once it exists. Example:
-    #
-    #   from app.routes.auth import auth_bp                  # Member 1
-    #   from app.routes.parcel import parcel_bp               # Member 2
-    #   from app.routes.admin import admin_bp                  # Member 3
-    #   from app.routes.notification import notification_bp     # Member 3
-    #
-    #   app.register_blueprint(auth_bp, url_prefix="/auth")
-    #   app.register_blueprint(parcel_bp, url_prefix="/parcels")
-    #   app.register_blueprint(admin_bp, url_prefix="/admin")
-    #   app.register_blueprint(notification_bp, url_prefix="/notifications")
+      # --- Blueprints ---
+    from app.routes.notification import notification_bp
+
+    app.register_blueprint(notification_bp, url_prefix="/notifications")
 
     @app.route("/")
     def root():
