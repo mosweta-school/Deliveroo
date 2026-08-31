@@ -1,32 +1,53 @@
+# app/models/user.py
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime
+from app.extensions import db
+from flask_bcrypt import Bcrypt
 
-from extensions import db
-
-
-def _utcnow():
-    """Timezone-aware UTC now. Plain datetime.utcnow() is deprecated in
-    Python 3.12+ and, worse, produces naive datetimes that silently misbehave
-    once compared against timezone-aware ones — so every timestamp in this
-    module goes through here instead."""
-    return datetime.now(timezone.utc)
-
+bcrypt = Bcrypt()
 
 class User(db.Model):
     __tablename__ = "users"
-
+    
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    full_name = db.Column(db.String(120), nullable=False)
-    email = db.Column(db.String(255), unique=True, nullable=False, index=True)
+    first_name = db.Column(db.String(100), nullable=False)
+    last_name = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(255), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
-    role = db.Column(db.String(20), nullable=False, default="customer")  # "customer" | "admin"
-    created_at = db.Column(db.DateTime(timezone=True), default=_utcnow)
-    updated_at = db.Column(db.DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
-
-    # Once Allan's Parcel model exists, uncomment this so a user can list
-    # their own parcels via user.parcels. Left out for now so this file
-    # imports cleanly before models/parcel.py exists.
-    # parcels = db.relationship("Parcel", backref="user", lazy="dynamic")
-
-    def __repr__(self):
-        return f"<User {self.email}>"
+    phone_number = db.Column(db.String(20), nullable=False)
+    role = db.Column(db.String(20), default='customer')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    parcels = db.relationship('Parcel', backref='user', lazy=True)
+    notifications = db.relationship('Notification', backref='user', lazy=True)
+    status_updates = db.relationship('ParcelStatusHistory', backref='updated_by_user', lazy=True)
+    
+    def set_password(self, password):
+        """Set the password hash"""
+        if not password:
+            raise ValueError('Password cannot be empty')
+        self.password_hash = bcrypt.generate_password_hash(password).decode('utf-8')
+    
+    def check_password(self, password):
+        """Check if the password matches"""
+        if not password:
+            return False
+        return bcrypt.check_password_hash(self.password_hash, password)
+    
+    @property
+    def full_name(self):
+        return f"{self.first_name} {self.last_name}"
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'first_name': self.first_name,
+            'last_name': self.last_name,
+            'email': self.email,
+            'phone_number': self.phone_number,
+            'role': self.role,
+            'full_name': self.full_name,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }

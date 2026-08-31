@@ -1,79 +1,84 @@
-import logging
-
-from extensions import db, bcrypt
-from models.user import User
-from models.token_blocklist import TokenBlocklist
-
-logger = logging.getLogger(__name__)
+# app/services/auth_service.py
+from flask import abort
+from flask_jwt_extended import create_access_token
+from app.extensions import db
+from app.models.user import User
 
 
-class AuthError(Exception):
-    """Raised for any auth-related failure the route should turn into an
-    error response. Keeps routes/auth.py thin — no HTTP concerns in here."""
-
-    def __init__(self, message: str, status_code: int = 400):
-        super().__init__(message)
-        self.message = message
-        self.status_code = status_code
-
-
-def register_user(data: dict) -> User:
-    """Create a new customer account. Raises AuthError(409) on duplicate email.
-    Role is always 'customer' here — self-registration can never grant admin."""
-    email = data["email"].lower().strip()
-
-    if db.session.execute(db.select(User).filter_by(email=email)).scalar_one_or_none():
-        raise AuthError("Email already registered", 409)
-
-    password_hash = bcrypt.generate_password_hash(data["password"]).decode("utf-8")
-
-    user = User(
-        full_name=data["full_name"].strip(),
+def register_user(user_data):
+    """Register a new user"""
+    # Handle both dictionary and object cases
+    if hasattr(user_data, '__dict__'):
+        # It's a User object from Marshmallow
+        email = user_data.email
+        first_name = user_data.first_name
+        last_name = user_data.last_name
+        phone_number = user_data.phone_number
+        role = getattr(user_data, 'role', 'customer')
+        
+        # Get password from the object (Marshmallow stores it in _password)
+        password = getattr(user_data, '_password', None)
+        if not password:
+            # Try to get password directly
+            password = getattr(user_data, 'password', None)
+    else:
+        # It's a dictionary
+        email = user_data.get('email')
+        first_name = user_data.get('first_name')
+        last_name = user_data.get('last_name')
+        phone_number = user_data.get('phone_number')
+        password = user_data.get('password')
+        role = user_data.get('role', 'customer')
+    
+    # Validate password
+    if not password:
+        abort(400, description="Password is required")
+    
+    # Check if user already exists
+    existing_user = User.query.filter_by(email=email).first()
+    if existing_user:
+        abort(400, description="User already exists with this email")
+    
+    # Create new user
+    new_user = User(
+        first_name=first_name,
+        last_name=last_name,
         email=email,
-        password_hash=password_hash,
-        role="customer",
+        phone_number=phone_number,
+        role=role
     )
-    db.session.add(user)
+    new_user.set_password(password)
+    
+    db.session.add(new_user)
     db.session.commit()
-    logger.info("New user registered: %s", user.email)
-    return user
+    
+    return new_user
 
 
-def authenticate_user(email: str, password: str) -> User:
-    """Verify credentials. Raises AuthError(401) on any mismatch — deliberately
-    the SAME message for 'no such user' and 'wrong password', so a caller
-    can't use the error to enumerate which emails are registered."""
-    user = db.session.execute(db.select(User).filter_by(email=email.lower().strip())).scalar_one_or_none()
-
-    if not user or not bcrypt.check_password_hash(user.password_hash, password):
-        logger.warning("Failed login attempt for email: %s", email)
-        raise AuthError("Invalid email or password", 401)
-
-    return user
-
-
-def get_user_by_id(user_id: str) -> User:
-    user = db.session.get(User, user_id)
+def login_user(email, password):
+    """Authenticate user and generate access token"""
+    user = User.query.filter_by(email=email).first()
     if not user:
-        raise AuthError("User not found", 404)
+        abort(401, description="Invalid email or password")
+    
+    if not user.check_password(password):
+        abort(401, description="Invalid email or password")
+    
+    access_token = create_access_token(
+        identity=user.id,
+        additional_claims={
+            'email': user.email,
+            'role': user.role,
+            'full_name': user.full_name
+        }
+    )
+    
+    return access_token, user
+
+
+def get_user_by_id(user_id):
+    """Get user by ID"""
+    user = User.query.get(user_id)
+    if not user:
+        abort(404, description="User not found")
     return user
-
-
-def is_admin(user_id: str) -> bool:
-    """Reusable role check other members' modules can import too, e.g.
-    Allan/Wayne guarding admin-only parcel/status endpoints."""
-    user = db.session.get(User, user_id)
-    return bool(user and user.role == "admin")
-
-
-def revoke_token(jti: str) -> None:
-    """Blacklist a token's jti so it's rejected on every future request even
-    though it hasn't expired yet — this is what /auth/logout calls."""
-    db.session.add(TokenBlocklist(jti=jti))
-    db.session.commit()
-
-
-def is_token_revoked(jti: str) -> bool:
-    return db.session.execute(
-        db.select(TokenBlocklist.id).filter_by(jti=jti)
-    ).scalar_one_or_none() is not None

@@ -1,6 +1,8 @@
+# app/__init__.py - For Flasgger >= 0.9.7.1
 import os
 
 from flask import Flask, jsonify
+from flasgger import Swagger, swag_from
 
 from app.config import config_map
 from app.errors import register_error_handlers
@@ -23,9 +25,44 @@ def create_app(config_name: str | None = None) -> Flask:
     jwt.init_app(app)
     bcrypt.init_app(app)
     mail.init_app(app)
+    
+    # Swagger configuration
+    swagger_config = {
+        "headers": [],
+        "specs": [
+            {
+                "endpoint": 'apispec',
+                "route": '/apispec.json',
+                "rule_filter": lambda rule: True,
+                "model_filter": lambda tag: True,
+            }
+        ],
+        "static_url_path": "/flasgger_static",
+        "swagger_ui": True,
+        "specs_route": "/apidocs/"
+    }
+    
+    # Initialize Swagger
+    swagger = Swagger(app, config=swagger_config)
+    
+    # Set security definitions
+    swagger.template = {
+        "securityDefinitions": {
+            "Bearer": {
+                "type": "apiKey",
+                "name": "Authorization",
+                "in": "header",
+                "description": "JWT Authorization header using the Bearer scheme. Example: 'Bearer {token}'"
+            }
+        },
+        "security": [
+            {
+                "Bearer": []
+            }
+        ]
+    }
 
-    # Wide open now since there's no frontend integration yet; CORS_ORIGINS in .env
-    # controls this — tighten it once the React app's real dev/prod URLs are known.
+    # CORS
     cors.init_app(app, resources={r"/*": {"origins": app.config["CORS_ORIGINS"]}}, supports_credentials=True)
 
     register_error_handlers(app)
@@ -34,17 +71,15 @@ def create_app(config_name: str | None = None) -> Flask:
     from app import models  # noqa: F401
 
     # --- Blueprints ---
-    # Each member registers their own blueprint here once it exists. Example:
-    #
-    #   from app.routes.auth import auth_bp                  # Member 1
-    #   from app.routes.parcel import parcel_bp               # Member 2
-    #   from app.routes.admin import admin_bp                  # Member 3
-    #   from app.routes.notification import notification_bp     # Member 3
-    #
-    #   app.register_blueprint(auth_bp, url_prefix="/auth")
-    #   app.register_blueprint(parcel_bp, url_prefix="/parcels")
-    #   app.register_blueprint(admin_bp, url_prefix="/admin")
-    #   app.register_blueprint(notification_bp, url_prefix="/notifications")
+    from app.routes.auth import auth_bp
+    from app.routes.parcel import parcel_bp
+    from app.routes.admin import admin_bp
+    from app.routes.notification import notification_bp
+
+    app.register_blueprint(auth_bp, url_prefix="/auth")
+    app.register_blueprint(parcel_bp, url_prefix="/parcels")
+    app.register_blueprint(admin_bp, url_prefix="/admin")
+    app.register_blueprint(notification_bp, url_prefix="/notifications")
 
     @app.route("/")
     def root():

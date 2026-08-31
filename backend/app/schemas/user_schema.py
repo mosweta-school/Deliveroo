@@ -1,48 +1,32 @@
-from marshmallow import Schema, fields, validate
-
-from extensions import ma
-from models.user import User
+# app/schemas/user_schema.py - Simpler version
+from app.extensions import ma
+from app.models.user import User
+from marshmallow import fields, validate, ValidationError, validates_schema
 
 
 class UserSchema(ma.SQLAlchemyAutoSchema):
-    """Response schema — used to serialize a User back to the client.
-    password_hash is excluded so it never leaves the server.
-    """
-
     class Meta:
         model = User
+        # Don't use load_instance - we'll create the user manually
         load_instance = False
-        exclude = ("password_hash",)
+        exclude = ('password_hash',)
+    
+    # Add validation for registration
+    password = fields.Str(required=True, validate=validate.Length(min=6))
+    confirm_password = fields.Str(required=True)
+    
+    full_name = fields.Method("get_full_name", dump_only=True)
+    
+    def get_full_name(self, obj):
+        return obj.full_name if hasattr(obj, 'full_name') else f"{obj.first_name} {obj.last_name}"
+    
+    # Validate that password and confirm_password match
+    @validates_schema
+    def validate_passwords(self, data, **kwargs):
+        if data.get('password') != data.get('confirm_password'):
+            raise ValidationError("Passwords do not match")
+        return data
 
-    id = fields.String(dump_only=True)
-    email = fields.Email(required=True)
-    full_name = fields.String(required=True, validate=validate.Length(min=2, max=120))
-    role = fields.String(dump_only=True)
-    created_at = fields.DateTime(dump_only=True)
-    updated_at = fields.DateTime(dump_only=True)
-
-
-class RegisterSchema(Schema):
-    """Input schema for POST /auth/register.
-    Role is intentionally NOT accepted here — every self-registration is a
-    'customer'. Promoting someone to admin should be a separate, protected
-    action (e.g. done directly in Supabase or via an admin-only endpoint),
-    never something a client can set on themselves at signup.
-    """
-
-    full_name = fields.String(required=True, validate=validate.Length(min=2, max=120))
-    email = fields.Email(required=True)
-    password = fields.String(required=True, load_only=True, validate=validate.Length(min=8))
-
-
-class LoginSchema(Schema):
-    """Input schema for POST /auth/login — email + password only."""
-
-    email = fields.Email(required=True)
-    password = fields.String(required=True, load_only=True)
-
-
+# Create schema instances
 user_schema = UserSchema()
 users_schema = UserSchema(many=True)
-register_schema = RegisterSchema()
-login_schema = LoginSchema()

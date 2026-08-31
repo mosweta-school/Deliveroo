@@ -27,3 +27,4 @@ logs/
 # SQLite (used only for local/test runs, never for real data)
 *.sqlite3
 *.db
+repomix-output.xml
