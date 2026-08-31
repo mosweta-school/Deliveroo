@@ -1,0 +1,67 @@
+# app/models/parcel.py
+import uuid  # Add this import
+from datetime import datetime
+from app.extensions import db
+
+WEIGHT_CATEGORIES = ["Light", "Medium", "Heavy"]
+
+def generate_tracking_number():
+    return "TRK-" + uuid.uuid4().hex[:8].upper()
+
+class Parcel(db.Model):
+    __tablename__ = "parcels"
+
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=False)
+    pickup_location_id = db.Column(
+        db.String(36), db.ForeignKey("locations.id"), nullable=False
+    )
+    destination_id = db.Column(
+        db.String(36), db.ForeignKey("locations.id"), nullable=False
+    )
+    weight = db.Column(db.Float, nullable=False)
+    weight_category = db.Column(db.String(20), nullable=False)
+    price = db.Column(db.Float, nullable=True)
+    status = db.Column(db.String(20), nullable=False, default="Pending")
+    tracking_number = db.Column(db.String(20), unique=True, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
+
+    # Relationships with overlaps to fix warnings
+    pickup_location = db.relationship(
+        "Location", 
+        foreign_keys=[pickup_location_id],
+        overlaps="pickup_location_ref,pickup_parcels"  # Add this
+    )
+    destination = db.relationship(
+        "Location", 
+        foreign_keys=[destination_id],
+        overlaps="destination_ref,destination_parcels"  # Add this
+    )
+    status_history = db.relationship("ParcelStatusHistory", backref="parcel", lazy=True)
+    notifications = db.relationship("Notification", backref="parcel", lazy=True)
+
+    def to_dict(self):
+        pickup = self.pickup_location.to_dict() if self.pickup_location else None
+        dest = self.destination.to_dict() if self.destination else None
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "tracking_number": self.tracking_number,
+            "pickup_location": pickup,
+            "destination": dest,
+            "weight": self.weight,
+            "weight_category": self.weight_category,
+            "price": self.price,
+            "status": self.status,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+    def is_delivered(self):
+        return self.status == "Delivered"
+
+    def is_cancelable(self):
+        return self.status in ("Pending", "In Transit", "Picked Up")                                                                                                                                                                                  

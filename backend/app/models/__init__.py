@@ -19,3 +19,9 @@ in `flask db migrate --autogenerate`, even though it inherits from db.Model.
 """
 
 # Member model imports go below this line:
+# app/models/__init__.py
+from app.models.user import User
+from app.models.location import Location
+from app.models.parcel import Parcel
+from app.models.parcel_status_history import ParcelStatusHistory
+from app.models.notification import Notification
