@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, send_from_directory
 
 from app.config import config_map
 from app.errors import register_error_handlers
@@ -45,6 +45,18 @@ def create_app(config_name: str | None = None) -> Flask:
     #   app.register_blueprint(parcel_bp, url_prefix="/parcels")
     #   app.register_blueprint(admin_bp, url_prefix="/admin")
     #   app.register_blueprint(notification_bp, url_prefix="/notifications")
+
+    # --- M-Pesa STK Push ---
+    from app.routes.mpesa import mpesa_bp
+    app.register_blueprint(mpesa_bp, url_prefix="/mpesa")
+
+    # --- Parcel CRUD ---
+    from app.routes.parcel import parcel_bp
+    app.register_blueprint(parcel_bp, url_prefix="/parcels")
+
+    @app.route("/swagger.yaml")
+    def swagger_yaml():
+        return send_from_directory('/home/allan-kimani/Deliveroo/backend', 'swagger.yaml', mimetype='text/yaml')
 
     @app.route("/")
     def root():

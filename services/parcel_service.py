@@ -14,45 +14,46 @@ def generate_tracking_number():
 
 
 def create_parcel(user_id, data):
-    weight_category = data.get("weight_category", "Light")
+ weight_category = data.get("weight_category", "Light")
 
-    if weight_category not in WEIGHT_CATEGORIES:
-        return None, f"Invalid weight category. Must be one of: {WEIGHT_CATEGORIES}"
+ if weight_category not in WEIGHT_CATEGORIES:
+      return None, f"Invalid weight category. Must be one of: {WEIGHT_CATEGORIES}"
 
-    pickup_data = data.get("pickup_location", {})
-    dest_data = data.get("destination", {})
+ pickup_data = data.get("pickup_location", {})
+ dest_data = data.get("destination", {})
 
-    pickup_location = Location(
-        address=pickup_data.get("address"),
-        latitude=pickup_data.get("latitude"),
-        longitude=pickup_data.get("longitude"),
-    )
+ pickup_location = Location(
+ address=pickup_data.get("address"),
+ latitude=pickup_data.get("latitude"),
+  longitude=pickup_data.get("longitude"),
+)
 
-    destination = Location(
-        address=dest_data.get("address"),
-        latitude=dest_data.get("latitude"),
-        longitude=dest_data.get("longitude"),
-    )
+ destination = Location(
+ address=dest_data.get("address"),
+ latitude=dest_data.get("latitude"),
+ longitude=dest_data.get("longitude"),
+)
 
-    weight = data.get("weight", 0.0)
+ weight = data.get("weight", 0.0)
 
-    tracking_number = generate_tracking_number()
+ tracking_number = generate_tracking_number()
 
-    parcel = Parcel(
-        user_id=user_id,
-        pickup_location=pickup_location,
-        destination=destination,
-        weight=weight,
-        weight_category=weight_category,
-        tracking_number=tracking_number,
-    )
+ parcel = Parcel(
+  user_id=user_id,
+  pickup_location=pickup_location,
+  destination=destination,
+ weight=weight,
+  weight_category=weight_category,
+  tracking_number=tracking_number,
+)
 
-    from app import db
+ from app import db
 
-    db.session.add(parcel)
-    db.session.commit()
+ db.session.add(parcel)
+ db.session.commit()
 
-    return parcel, None
+ return parcel, None
+
 
 
 def get_user_parcels(user_id, page=1, per_page=10):

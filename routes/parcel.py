@@ -14,21 +14,21 @@ parcel_response_schema = ParcelResponseSchema()
 
 
 @parcel_bp.route("/", methods=["POST"])
-@jwt_required()
-def create():
-    user_id = get_jwt_identity()
-    data = request.get_json()
+# @jwt_required ()
+def create_parcel_route():
+ user_id = get_jwt_identity()
+ data = request.get_json()
 
-    parcel, err = create_parcel(user_id=user_id, data=data)
+ parcel, err = create_parcel(user_id=user_id, data=data)
 
-    if err:
-        return jsonify({"error": err}), 400
+ if err:
+    return jsonify({"error": err}), 400
 
     return parcel_response_schema.dump(parcel), 201
-
+    
 
 @parcel_bp.route("/", methods=["GET"])
-@jwt_required()
+# @jwt_required()
 def list_user_parcels():
     user_id = get_jwt_identity()
     page = request.args.get("page", 1, type=int)

@@ -1,0 +1,353 @@
+openapi: 3.0.2
+info:
+  title: Deliveroo API
+  version: 1.0.0
+  description: API documentation for Deliveroo backend services
+servers:
+  - url: http://localhost:5000
+    description: Development server
+paths:
+  /:
+    get:
+      summary: Root endpoint
+      description: Returns a welcome message
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  /health:
+    get:
+      summary: Health check
+      description: Returns the health status of the application
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  environment:
+                    type: string
+  /parcels:
+    get:
+      summary: List user parcels
+      description: Retrieve a paginated list of parcels for the authenticated user
+      operationId: listUserParcels
+      parameters:
+        - name: page
+          in: query
+          description: Page number (default: 1)
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          description: Items per page (default: 10)
+          required: false
+          schema:
+            type: integer
+            default: 10
+      responses:
+        200:
+          description: List of parcels
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Parcel'
+        401:
+          description: Unauthorized - no valid JWT token provided
+  /parcels:
+    post:
+      summary: Create a new parcel
+      description: Create a new parcel for the authenticated user
+      operationId: createParcel
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ParcelCreate'
+      responses:
+        201:
+          description: Parcel created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Parcel'
+        400:
+          description: Bad request - validation error
+  /parcels/{parcel_id}:
+    get:
+      summary: Get parcel by ID
+      description: Retrieve details of a specific parcel by ID
+      operationId: getParcelById
+      parameters:
+        - name: parcel_id
+          in: path
+          description: Parcel ID
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Parcel details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Parcel'
+        404:
+          description: Parcel not found
+        403:
+          description: Unauthorized - not your parcel
+  /parcels/{parcel_id}/destination:
+    patch:
+      summary: Change parcel destination
+      description: Update the destination of a parcel
+      operationId: changeDestination
+      parameters:
+        - name: parcel_id
+          in: path
+          description: Parcel ID
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                new_destination:
+                  type: object
+                  properties:
+                    address:
+                      type: string
+                    latitude:
+                      type: number
+                    longitude:
+                      type: number
+      responses:
+        200:
+          description: Destination updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Parcel'
+        400:
+          description: Bad request - validation error
+        403:
+          description: Unauthorized - not your parcel
+  /parcels/{parcel_id}/cancel:
+    patch:
+      summary: Cancel a parcel
+      description: Cancel a parcel by ID
+      operationId: cancelParcel
+      parameters:
+        - name: parcel_id
+          in: path
+          description: Parcel ID
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Parcel cancelled successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Parcel'
+        400:
+          description: Bad request - cannot cancel
+        403:
+          description: Unauthorized - not your parcel
+  /mpesa/stk-push:
+    post:
+      summary: Trigger STK Push
+      description: Initiate an M-Pesa STK Push payment request
+      operationId: triggerStkPush
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - phone_number
+                - amount
+                - order_id
+              properties:
+                phone_number:
+                  type: string
+                  description: Phone number in format 254712345678
+                amount:
+                  type: integer
+                  description: Amount in cents
+                order_id:
+                  type: string
+                  description: Order identifier
+      responses:
+        200:
+          description: STK push initiated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  response:
+                    type: object
+        400:
+          description: Bad request - missing or invalid parameters
+        500:
+          description: Internal server error
+  /mpesa/callback:
+    post:
+      summary: Receive M-Pesa callback
+      description: Receive and process M-Pesa STK Push callback
+      operationId: receiveCallback
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                result_code:
+                  type: integer
+                  description: M-Pesa result code
+                checkout_request_id:
+                  type: string
+                  description: M-Pesa checkout request ID
+      responses:
+        200:
+          description: Callback received successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  status:
+                    type: string
+                  result_code:
+                    type: integer
+                  checkout_request_id:
+                    type: string
+components:
+  schemas:
+    Parcel:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Parcel unique identifier
+        user_id:
+          type: string
+          description: User identifier
+        tracking_number:
+          type: string
+          description: Parcel tracking number
+        pickup_location:
+          type: object
+          properties:
+            id:
+              type: string
+            address:
+              type: string
+            latitude:
+              type: number
+            longitude:
+              type: number
+        destination:
+          type: object
+          properties:
+            id:
+              type: string
+            address:
+              type: string
+            latitude:
+              type: number
+            longitude:
+              type: number
+        weight:
+          type: number
+          description: Weight in kilograms
+        weight_category:
+          type: string
+          description: Weight category (Light, Medium, Heavy)
+        status:
+          type: string
+          description: Parcel status (pending, in_transit, delivered, cancelled)
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+    ParcelCreate:
+      type: object
+      required:
+        - user_id
+        - pickup_location
+        - destination
+        - weight
+        - weight_category
+      properties:
+        user_id:
+          type: string
+        pickup_location:
+          type: object
+          properties:
+            address:
+              type: string
+            latitude:
+              type: number
+            longitude:
+              type: number
+        destination:
+          type: object
+          properties:
+            address:
+              type: string
+            latitude:
+              type: number
+            longitude:
+              type: number
+        weight:
+          type: number
+          description: Weight in kilograms
+        weight_category:
+          type: string
+          enum:
+            - Light
+            - Medium
+            - Heavy
+        status:
+          type: string
+          default: pending
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+      required:
+        - error
