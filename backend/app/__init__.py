@@ -85,9 +85,7 @@ def create_app(config_name: str | None = None) -> Flask:
     from app.routes.mpesa import mpesa_bp
     app.register_blueprint(mpesa_bp, url_prefix="/mpesa")
 
-    # --- Parcel CRUD ---
-    from app.routes.parcel import parcel_bp
-    app.register_blueprint(parcel_bp, url_prefix="/parcels")
+
 
     @app.route("/swagger.yaml")
     def swagger_yaml():
