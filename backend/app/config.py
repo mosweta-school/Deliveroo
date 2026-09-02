@@ -37,6 +37,14 @@ class Config:
     # --- CORS ---
     CORS_ORIGINS = [o.strip() for o in os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",") if o.strip()]
 
+    # --- M-Pesa STK Push ---
+    MPESA_CONSUMER_KEY = os.getenv("MPESA_CONSUMER_KEY", "")
+    MPESA_CONSUMER_SECRET = os.getenv("MPESA_CONSUMER_SECRET", "")
+    MPESA_SHORTCODE = os.getenv("MPESA_SHORTCODE", "")
+    MPESA_CALLBACK_URL = os.getenv("MPESA_CALLBACK_URL", "")
+    MPESA_ENVIRONMENT = os.getenv("MPESA_ENVIRONMENT", "sandbox")  # sandbox or production
+    MPESA_PASSKEY = os.getenv("MPESA_PASSKEY", "")
+
 
 class DevelopmentConfig(Config):
     DEBUG = True
