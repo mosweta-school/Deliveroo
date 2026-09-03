@@ -38,7 +38,7 @@ class Config:
 
     # --- CORS ---
     # Split and clean the origins
-    cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://localhost:3000")
+    cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://localhost:3000, https://deliveroo-beta.vercel.app/, https://vercel.com/deomosweta265-1049s-projects/deliveroo/9PNkd9xuu6UVXMEe22CdUBWwhMTh")
     CORS_ORIGINS = [o.strip() for o in cors_origins.split(",") if o.strip()]
     
     # Redis Configuration
