@@ -71,11 +71,15 @@ class DevelopmentConfig(Config):
 class ProductionConfig(Config):
     DEBUG = False
     # In production, restrict to specific origins
-    # Keep the env var or use specific domains
-    CORS_ORIGINS = Config.CORS_ORIGINS
+    CORS_ORIGINS = [
+        "https://deliveroo-beta.vercel.app",
+        "https://deliveroo.vercel.app",  # Add your production domain if different
+        "http://localhost:5173",  # For local testing against production
+        "http://localhost:3000"
+    ]
     
     # Ensure your production redis matches your target environment
-    REDIS_URL = os.getenv("REDIS_URL", Config.REDIS_URL) 
+    REDIS_URL = os.getenv("REDIS_URL", Config.REDIS_URL)
 
 
 class TestingConfig(Config):
