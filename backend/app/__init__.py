@@ -64,7 +64,7 @@ def create_app(config_name: str | None = None) -> Flask:
 
     # FIXED: CORS Configuration
     # Get origins from config or use defaults
-    origins = app.config.get('CORS_ORIGINS', ['http://localhost:5173', 'http://localhost:3000'])
+    origins = app.config.get('CORS_ORIGINS', ['http://localhost:5173', 'http://localhost:3000, https://deliveroo-beta.vercel.app/, https://vercel.com/deomosweta265-1049s-projects/deliveroo/9PNkd9xuu6UVXMEe22CdUBWwhMTh'])
     
     # If origins is a string, split it
     if isinstance(origins, str):

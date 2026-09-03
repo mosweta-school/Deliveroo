@@ -38,11 +38,11 @@ class Config:
 
     # --- CORS ---
     # Split and clean the origins
-    cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://localhost:3000")
+    cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://localhost:3000, https://deliveroo-beta.vercel.app/, https://vercel.com/deomosweta265-1049s-projects/deliveroo/9PNkd9xuu6UVXMEe22CdUBWwhMTh")
     CORS_ORIGINS = [o.strip() for o in cors_origins.split(",") if o.strip()]
     
     # Redis Configuration
-    REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+    REDIS_URL = os.getenv("REDIS_URL","rediss://default:gQAAAAAAAcWJAAIgcDI3ZjliMTc2YTdjNTE0NzdiYWY3NDczNTcwY2Y5ZmNhZA@gentle-jaguar-116105.upstash.io:6379")
     REDIS_LOCATION_EXPIRY = 60  # Location cache expiry in seconds
     REDIS_SESSION_EXPIRY = 3600  # Session expiry in seconds
 
