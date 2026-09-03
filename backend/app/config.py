@@ -38,7 +38,10 @@ class Config:
 
     # --- CORS ---
     # Split and clean the origins
-    cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://localhost:3000, https://deliveroo-beta.vercel.app/, https://vercel.com/deomosweta265-1049s-projects/deliveroo/9PNkd9xuu6UVXMEe22CdUBWwhMTh")
+    cors_origins = os.getenv(
+        "CORS_ORIGINS", 
+        "http://localhost:5173,http://localhost:3000,https://deliveroo-beta.vercel.app"
+    )
     CORS_ORIGINS = [o.strip() for o in cors_origins.split(",") if o.strip()]
     
     # Redis Configuration
@@ -69,11 +72,10 @@ class ProductionConfig(Config):
     DEBUG = False
     # In production, restrict to specific origins
     # Keep the env var or use specific domains
-    CORS_ORIGINS = [
-        "https://yourdomain.com",
-        "https://www.yourdomain.com"
-    ]
-    REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+    CORS_ORIGINS = Config.CORS_ORIGINS
+    
+    # Ensure your production redis matches your target environment
+    REDIS_URL = os.getenv("REDIS_URL", Config.REDIS_URL) 
 
 
 class TestingConfig(Config):
