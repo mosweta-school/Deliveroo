@@ -147,3 +147,15 @@ def get_profile():
         'success': True,
         'user': user_schema.dump(user)
     }), 200
+
+# backend/app/routes/auth.py - Add at the bottom
+
+@auth_bp.route("/cors-test", methods=["GET", "OPTIONS"])
+def cors_test():
+    """Test CORS endpoint"""
+    return jsonify({
+        "success": True,
+        "message": "CORS is working!",
+        "origin": request.headers.get('Origin', 'No origin header'),
+        "method": request.method
+    }), 200

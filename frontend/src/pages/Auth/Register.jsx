@@ -1,7 +1,8 @@
+// frontend/src/pages/Auth/Register.jsx
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { Truck, Mail, Lock, User, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { Truck, Mail, Lock, User, Phone, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { registerUser, clearAuthError } from '../../redux/slices/authSlice';
 
 const Register = () => {
@@ -12,8 +13,10 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [formError, setFormError] = useState('');
   const [formData, setFormData] = useState({
-    fullName: '',
+    firstName: '',
+    lastName: '',
     email: '',
+    phoneNumber: '',
     password: '',
     confirmPassword: '',
   });
@@ -23,8 +26,23 @@ const Register = () => {
     setFormError('');
     dispatch(clearAuthError());
 
-    // Client-side checks catch obvious mistakes before hitting the network —
-    // the backend still validates everything again, so this is convenience, not security.
+    // Client-side validation
+    if (!formData.firstName.trim()) {
+      setFormError('Please enter your first name.');
+      return;
+    }
+    if (!formData.lastName.trim()) {
+      setFormError('Please enter your last name.');
+      return;
+    }
+    if (!formData.email.trim()) {
+      setFormError('Please enter your email address.');
+      return;
+    }
+    if (!formData.phoneNumber.trim()) {
+      setFormError('Please enter your phone number.');
+      return;
+    }
     if (formData.password !== formData.confirmPassword) {
       setFormError("Passwords don't match.");
       return;
@@ -34,19 +52,20 @@ const Register = () => {
       return;
     }
 
-    const result = await dispatch(
-      registerUser({
-        fullName: formData.fullName,
-        email: formData.email,
-        password: formData.password,
-      })
-    );
+    // Prepare data for backend
+    const userData = {
+      firstName: formData.firstName.trim(),
+      lastName: formData.lastName.trim(),
+      email: formData.email.trim().toLowerCase(), // Convert email to lowercase
+      phoneNumber: formData.phoneNumber.trim(),
+      password: formData.password,
+    };
+
+    const result = await dispatch(registerUser(userData));
 
     if (registerUser.fulfilled.match(result)) {
       navigate('/login?registered=true');
     }
-    // On failure (including a 409 duplicate-email from the backend), `error`
-    // in redux state is set and rendered below.
   };
 
   return (
@@ -69,22 +88,41 @@ const Register = () => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* First Name */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">First Name</label>
             <div className="relative">
               <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
               <input
                 type="text"
-                value={formData.fullName}
-                onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                value={formData.firstName}
+                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                 className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Jane Muthoni"
+                placeholder="Jane"
                 required
-                minLength={2}
+                disabled={loading}
               />
             </div>
           </div>
 
+          {/* Last Name */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Last Name</label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+              <input
+                type="text"
+                value={formData.lastName}
+                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Muthoni"
+                required
+                disabled={loading}
+              />
+            </div>
+          </div>
+
+          {/* Email */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Email Address</label>
             <div className="relative">
@@ -94,12 +132,31 @@ const Register = () => {
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="you@example.com"
+                placeholder="jane@example.com"
                 required
+                disabled={loading}
               />
             </div>
           </div>
 
+          {/* Phone Number */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Phone Number</label>
+            <div className="relative">
+              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+              <input
+                type="tel"
+                value={formData.phoneNumber}
+                onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="+254 712 345 678"
+                required
+                disabled={loading}
+              />
+            </div>
+          </div>
+
+          {/* Password */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
             <div className="relative">
@@ -112,17 +169,20 @@ const Register = () => {
                 placeholder="At least 8 characters"
                 required
                 minLength={8}
+                disabled={loading}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                disabled={loading}
               >
                 {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
               </button>
             </div>
           </div>
 
+          {/* Confirm Password */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Confirm Password</label>
             <div className="relative">
@@ -132,8 +192,9 @@ const Register = () => {
                 value={formData.confirmPassword}
                 onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                 className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="••••••••"
+                placeholder="Confirm your password"
                 required
+                disabled={loading}
               />
             </div>
           </div>

@@ -1,4 +1,4 @@
-# app/models/user.py
+# backend/app/models/user.py
 import uuid
 from datetime import datetime
 from app.extensions import db
@@ -16,22 +16,35 @@ class User(db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     phone_number = db.Column(db.String(20), nullable=False)
     role = db.Column(db.String(20), default='customer')
+    
+    # Driver-specific fields
+    vehicle = db.Column(db.String(100), nullable=True)
+    plate = db.Column(db.String(20), nullable=True)
+    status = db.Column(db.String(20), default='Offline')
+    deliveries = db.Column(db.Integer, default=0)
+    rating = db.Column(db.Float, nullable=True)
+    
+    # Location fields
+    current_latitude = db.Column(db.Float, nullable=True)
+    current_longitude = db.Column(db.Float, nullable=True)
+    last_location_update = db.Column(db.DateTime, nullable=True)
+    
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    # Relationships
-    parcels = db.relationship('Parcel', backref='user', lazy=True)
-    notifications = db.relationship('Notification', backref='user', lazy=True)
-    status_updates = db.relationship('ParcelStatusHistory', backref='updated_by_user', lazy=True)
+    # --- FIX: Use consistent back_populates for all relationships ---
+    parcels = db.relationship('Parcel', foreign_keys='Parcel.user_id', back_populates='user', lazy=True)
+    assigned_parcels = db.relationship('Parcel', foreign_keys='Parcel.rider_id', back_populates='rider', lazy=True)
+    notifications = db.relationship('Notification', back_populates='user', lazy=True)
+    status_updates = db.relationship('ParcelStatusHistory', back_populates='updated_by_user', lazy=True)
+    # --- END FIX ---
     
     def set_password(self, password):
-        """Set the password hash"""
         if not password:
             raise ValueError('Password cannot be empty')
         self.password_hash = bcrypt.generate_password_hash(password).decode('utf-8')
     
     def check_password(self, password):
-        """Check if the password matches"""
         if not password:
             return False
         return bcrypt.check_password_hash(self.password_hash, password)
@@ -49,5 +62,13 @@ class User(db.Model):
             'phone_number': self.phone_number,
             'role': self.role,
             'full_name': self.full_name,
+            'vehicle': self.vehicle,
+            'plate': self.plate,
+            'status': self.status,
+            'deliveries': self.deliveries,
+            'rating': self.rating,
+            'current_latitude': self.current_latitude,
+            'current_longitude': self.current_longitude,
+            'last_location_update': self.last_location_update.isoformat() if self.last_location_update else None,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }

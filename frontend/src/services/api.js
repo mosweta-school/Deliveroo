@@ -1,36 +1,42 @@
-import axios from "axios";
+// frontend/src/services/api.js
+import axios from 'axios';
 
-// Vite exposes env vars prefixed with VITE_ via import.meta.env.
-// Create a .env file in your frontend/ root with:
-//   VITE_API_BASE_URL=http://localhost:5000
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
 const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: { "Content-Type": "application/json" },
-});
-
-// Attach the JWT access token to every outgoing request automatically,
-// so individual pages never have to remember to do it themselves.
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
-
-// If the backend ever rejects the token (expired/invalid/revoked), clear
-// local auth state and bounce to login instead of leaving the app stuck
-// in a "logged in but every request 401s" state.
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem("token");
-      localStorage.removeItem("refresh_token");
-      localStorage.removeItem("user");
-      if (window.location.pathname !== "/login") {
-        window.location.href = "/login";
-      }
+  baseURL: API_URL,
+    headers: {
+        'Content-Type': 'application/json',
+          },
+          });
+          
+          // Request interceptor - add token to all requests
+          api.interceptors.request.use(
+            (config) => {
+                const token = localStorage.getItem('token');
+                    if (token) {
+                          config.headers.Authorization = `Bearer ${token}`;
+                              }
+                                  return config;
+                                    },
+                                      (error) => {
+                                          return Promise.reject(error);
+                                            }
+                                            );
+                                            
+                                            // Response interceptor - handle 401 errors
+                                            api.interceptors.response.use(
+                                              (response) => response,
+                                                (error) => {
+                                                    // If unauthorized, clear token and redirect to login
+                                                        if (error.response?.status === 401) {
+                                                              localStorage.removeItem('token');
+                                                                    localStorage.removeItem('user');
+                                                                          
+                                                                                // Check if we're not already on login page
+                                                                                      if (!window.location.pathname.includes('/login')) {
+                                                                                              window.location.href = '/login';
+                                                                                                    }
     }
     return Promise.reject(error);
   }

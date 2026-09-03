@@ -1,3 +1,4 @@
+# backend/app/extensions.py
 """
 Shared extension instances.
 
@@ -22,7 +23,7 @@ from flask_marshmallow import Marshmallow
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from flasgger import Swagger
-
+from flask_socketio import SocketIO
 swagger = Swagger()
 
 db = SQLAlchemy()
@@ -32,3 +33,4 @@ jwt = JWTManager()
 bcrypt = Bcrypt()
 mail = Mail()
 cors = CORS()
+socketio = SocketIO(cors_allowed_origins="*", async_mode='eventlet')

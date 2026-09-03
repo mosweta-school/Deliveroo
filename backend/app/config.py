@@ -1,3 +1,4 @@
+# backend/app/config.py
 """
 Centralized application configuration.
 
@@ -10,6 +11,7 @@ import os
 from datetime import timedelta
 
 from dotenv import load_dotenv
+import redis
 
 load_dotenv()
 
@@ -35,7 +37,14 @@ class Config:
     MAIL_DEFAULT_SENDER = os.getenv("EMAIL")
 
     # --- CORS ---
-    CORS_ORIGINS = [o.strip() for o in os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",") if o.strip()]
+    # Split and clean the origins
+    cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://localhost:3000")
+    CORS_ORIGINS = [o.strip() for o in cors_origins.split(",") if o.strip()]
+    
+    # Redis Configuration
+    REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+    REDIS_LOCATION_EXPIRY = 60  # Location cache expiry in seconds
+    REDIS_SESSION_EXPIRY = 3600  # Session expiry in seconds
 
     # --- M-Pesa STK Push ---
     MPESA_CONSUMER_KEY = os.getenv("MPESA_CONSUMER_KEY", "")
@@ -46,18 +55,32 @@ class Config:
     MPESA_PASSKEY = os.getenv("MPESA_PASSKEY", "")
 
 
+
+    
 class DevelopmentConfig(Config):
     DEBUG = True
+    # Allow all origins in development
+    CORS_ORIGINS = ["http://localhost:5173"]
+    REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+    
 
 
 class ProductionConfig(Config):
     DEBUG = False
+    # In production, restrict to specific origins
+    # Keep the env var or use specific domains
+    CORS_ORIGINS = [
+        "https://yourdomain.com",
+        "https://www.yourdomain.com"
+    ]
+    REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
 
 class TestingConfig(Config):
     TESTING = True
     # Tests never touch the real Supabase database — isolated in-memory sqlite instead.
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
+    CORS_ORIGINS = ["*"]
 
 
 config_map = {

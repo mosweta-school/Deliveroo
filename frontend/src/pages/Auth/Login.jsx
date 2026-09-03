@@ -1,52 +1,83 @@
+// frontend/src/pages/Auth/Login.jsx
 import React, { useState } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
 import { Truck, Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
-import { loginUser } from '../../redux/slices/authSlice';
+import { authService } from '../../services/authService';
 
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const dispatch = useDispatch();
-  const { loading, error } = useSelector((state) => state.auth);
 
+  // State
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [formData, setFormData] = useState({ email: '', password: '' });
 
-  // Shows a banner if we arrived here right after registering (see Register.jsx).
+  // Shows a banner if we arrived here right after registering
   const justRegistered = new URLSearchParams(location.search).get('registered') === 'true';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const result = await dispatch(loginUser(formData));
+    setError('');
+    setLoading(true);
 
-    if (loginUser.fulfilled.match(result)) {
-      const role = result.payload.user.role;
-      navigate(role === 'admin' ? '/admin' : '/customer');
+    // Validate form
+    if (!formData.email || !formData.password) {
+      setError('Please fill in all fields');
+      setLoading(false);
+      return;
     }
-    // On failure, `error` in redux state is already set by the rejected case
-    // and rendered below — nothing else to do here.
+
+    try {
+      const response = await authService.login(formData.email, formData.password);
+      
+      if (response.success) {
+        // Store user data and token
+        localStorage.setItem('token', response.access_token);
+        localStorage.setItem('user', JSON.stringify(response.user));
+
+        // Navigate based on role
+        if (response.user.role === 'admin') {
+          navigate('/admin');
+        } else if (response.user.role === 'driver') {
+          navigate('/rider');
+        } else {
+          navigate('/customer');
+        }
+      } else {
+        setError(response.message || 'Login failed. Please try again.');
+      }
+    } catch (err) {
+      console.error('Login error:', err);
+      setError(err.response?.data?.message || 'Invalid email or password. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-8">
+        {/* Logo and Header */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4 flex-col items-center">
             <Truck className="h-12 w-12 text-blue-600" />
-            <p className='text-xl font-bold text-blue-600'>Deliveroo</p>
+            <p className="text-xl font-bold text-blue-600">Deliveroo</p>
           </div>
           <h1 className="text-2xl font-bold text-slate-900">Welcome Back</h1>
           <p className="text-slate-600 text-sm">Access your logistics and delivery hub</p>
         </div>
 
+        {/* Success Message - Just Registered */}
         {justRegistered && (
           <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-start gap-2">
             <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-green-700">Account created — sign in to continue.</p>
+            <p className="text-sm text-green-700">Account created successfully! Please sign in.</p>
           </div>
         )}
 
+        {/* Error Message */}
         {error && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
             <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
@@ -54,9 +85,12 @@ const Login = () => {
           </div>
         )}
 
+        {/* Login Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Email Address</label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Email Address
+            </label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
               <input
@@ -66,12 +100,15 @@ const Login = () => {
                 className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Enter your email"
                 required
+                disabled={loading}
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Password
+            </label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
               <input
@@ -81,15 +118,30 @@ const Login = () => {
                 className="w-full pl-10 pr-12 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="••••••••"
                 required
+                disabled={loading}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                disabled={loading}
               >
                 {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
               </button>
             </div>
+          </div>
+
+          <div className="flex items-center justify-between text-sm">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input 
+                type="checkbox" 
+                className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
+              />
+              <span className="text-slate-600">Remember me</span>
+            </label>
+            <Link to="/forgotpassword" className="text-blue-600 hover:underline">
+              Forgot password?
+            </Link>
           </div>
 
           <button
@@ -111,6 +163,7 @@ const Login = () => {
           </button>
         </form>
 
+        {/* Sign Up Link */}
         <p className="text-center text-sm text-slate-600 mt-6">
           Don't have an account?{' '}
           <Link to="/register" className="text-blue-600 hover:underline font-medium">

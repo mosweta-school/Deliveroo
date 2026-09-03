@@ -1,4 +1,4 @@
-# app/__init__.py - For Flasgger >= 0.9.7.1
+# backend/app/__init__.py
 import os
 
 from flask import Flask, jsonify, send_from_directory
@@ -8,6 +8,7 @@ from app.config import config_map
 from app.errors import register_error_handlers
 from app.extensions import bcrypt, cors, db, jwt, mail, ma, migrate
 from app.logging_config import setup_logging
+from app.extensions import socketio
 
 
 def create_app(config_name: str | None = None) -> Flask:
@@ -25,6 +26,7 @@ def create_app(config_name: str | None = None) -> Flask:
     jwt.init_app(app)
     bcrypt.init_app(app)
     mail.init_app(app)
+    socketio.init_app(app, cors_allowed_origins="*")
     
     # Swagger configuration
     swagger_config = {
@@ -42,10 +44,8 @@ def create_app(config_name: str | None = None) -> Flask:
         "specs_route": "/apidocs/"
     }
     
-    # Initialize Swagger
     swagger = Swagger(app, config=swagger_config)
     
-    # Set security definitions
     swagger.template = {
         "securityDefinitions": {
             "Bearer": {
@@ -62,8 +62,31 @@ def create_app(config_name: str | None = None) -> Flask:
         ]
     }
 
-    # CORS
-    cors.init_app(app, resources={r"/*": {"origins": app.config["CORS_ORIGINS"]}}, supports_credentials=True)
+    # FIXED: CORS Configuration
+    # Get origins from config or use defaults
+    origins = app.config.get('CORS_ORIGINS', ['http://localhost:5173', 'http://localhost:3000'])
+    
+    # If origins is a string, split it
+    if isinstance(origins, str):
+        origins = [o.strip() for o in origins.split(',') if o.strip()]
+    
+    # For development, allow all origins
+    if app.config.get('DEBUG', False):
+        origins = ['*']
+    
+    cors.init_app(
+        app, 
+        resources={
+            r"/*": {
+                "origins": origins,
+                "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+                "allow_headers": ["Content-Type", "Authorization", "Accept", "X-Requested-With"],
+                "expose_headers": ["Content-Type", "Authorization"],
+                "supports_credentials": True,
+                "max_age": 86400  # 24 hours
+            }
+        }
+    )
 
     register_error_handlers(app)
 
@@ -75,11 +98,19 @@ def create_app(config_name: str | None = None) -> Flask:
     from app.routes.parcel import parcel_bp
     from app.routes.admin import admin_bp
     from app.routes.notification import notification_bp
+    from app.routes.rider import rider_bp
+    from app.routes.customer import customer_bp
+
 
     app.register_blueprint(auth_bp, url_prefix="/auth")
     app.register_blueprint(parcel_bp, url_prefix="/parcels")
     app.register_blueprint(admin_bp, url_prefix="/admin")
     app.register_blueprint(notification_bp, url_prefix="/notifications")
+    app.register_blueprint(rider_bp, url_prefix="/rider") 
+    app.register_blueprint(customer_bp, url_prefix="/customer")
+    
+
+    from app import socket_events  # noqa: F401
 
     # --- M-Pesa STK Push ---
     from app.routes.mpesa import mpesa_bp

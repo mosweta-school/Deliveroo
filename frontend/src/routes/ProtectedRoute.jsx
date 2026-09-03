@@ -1,33 +1,27 @@
+// frontend/src/routes/ProtectedRoute.jsx
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { authService } from '../services/authService';
 
-/**
- * Wrap any route element to require login, and optionally a specific role.
- *
- *   <Route path="/customer" element={
- *     <ProtectedRoute allowedRoles={['customer']}>
- *       <CustomerDashboard />
- *     </ProtectedRoute>
- *   } />
- *
- *   <Route path="/admin" element={
- *     <ProtectedRoute allowedRoles={['admin']}>
- *       <AdminDashboard />
- *     </ProtectedRoute>
- *   } />
- */
-const ProtectedRoute = ({ children, allowedRoles }) => {
-  const { isAuthenticated, user } = useSelector((state) => state.auth);
+const ProtectedRoute = ({ children, requiredRole }) => {
+  const isAuthenticated = authService.isAuthenticated();
+  const user = authService.getCurrentUser();
 
+  // Check if user is authenticated
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
-  if (allowedRoles && !allowedRoles.includes(user?.role)) {
-    // Logged in, just the wrong role — send them to their own dashboard
-    // instead of an error page.
-    return <Navigate to={user?.role === 'admin' ? '/admin' : '/customer'} replace />;
+  // Check if role matches (if required)
+  if (requiredRole && user?.role !== requiredRole) {
+    // Redirect to appropriate dashboard based on role
+    if (user?.role === 'admin') {
+      return <Navigate to="/admin" replace />;
+    } else if (user?.role === 'customer') {
+      return <Navigate to="/customer" replace />;
+    }else if (user?.role === 'driver') {
+      return <Navigate to="/rider" replace />;
+    } return <Navigate to="/login" replace />;
   }
 
   return children;
