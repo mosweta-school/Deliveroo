@@ -62,17 +62,27 @@ def create_app(config_name: str | None = None) -> Flask:
         ]
     }
 
-    # FIXED: CORS Configuration
+    # --- FIXED CORS Configuration ---
     # Get origins from config or use defaults
-    origins = app.config.get('CORS_ORIGINS', ['http://localhost:5173', 'http://localhost:3000, https://deliveroo-beta.vercel.app/, https://vercel.com/deomosweta265-1049s-projects/deliveroo/9PNkd9xuu6UVXMEe22CdUBWwhMTh'])
+    origins = app.config.get('CORS_ORIGINS', [
+        'http://localhost:5173', 
+        'http://localhost:3000',
+        'https://deliveroo-beta.vercel.app',
+        'https://vercel.com'
+    ])
     
-    # If origins is a string, split it
+    # If origins is a string, split it properly
     if isinstance(origins, str):
+        # Split by comma and clean up whitespace
         origins = [o.strip() for o in origins.split(',') if o.strip()]
     
     # For development, allow all origins
     if app.config.get('DEBUG', False):
         origins = ['*']
+    
+    # Ensure the Vercel domain is properly included
+    if 'https://deliveroo-beta.vercel.app' not in origins and '*' not in origins:
+        origins.append('https://deliveroo-beta.vercel.app')
     
     cors.init_app(
         app, 
