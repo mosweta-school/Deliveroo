@@ -9,18 +9,31 @@ export const authService = {
       return response.data;
     } catch (error) {
       console.error('Login error:', error);
-      throw error;
+      const errorMessage = error.response?.data?.error || 
+                          error.response?.data?.message || 
+                          'Invalid email or password. Please try again.';
+      throw new Error(errorMessage);
     }
   },
 
-  // Register user
+  // Register user - sends first_name, last_name, email, phone_number
   register: async (userData) => {
     try {
-      const response = await api.post('/auth/register', userData);
+      const response = await api.post('/auth/register', {
+        first_name: userData.firstName,
+        last_name: userData.lastName,
+        email: userData.email.toLowerCase(), // Ensure lowercase
+        phone_number: userData.phoneNumber,
+        password: userData.password,
+        confirm_password: userData.password
+      });
       return response.data;
     } catch (error) {
       console.error('Register error:', error);
-      throw error;
+      const errorMessage = error.response?.data?.error || 
+                          error.response?.data?.message || 
+                          'Registration failed. Please try again.';
+      throw new Error(errorMessage);
     }
   },
 
@@ -39,7 +52,6 @@ export const authService = {
   logout: () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    // Redirect to login
     window.location.href = '/login';
   },
 
@@ -62,17 +74,20 @@ export const authService = {
   }
 };
 
-
-// Thin wrappers around each backend auth endpoint. Keeping these separate
-// from Redux means any component can call them directly if it ever needs to,
-// without going through a thunk.
-
+// Redux thunk wrappers
 export const loginRequest = (email, password) =>
   api.post("/auth/login", { email, password }).then((res) => res.data);
 
-export const registerRequest = (fullName, email, password) =>
+export const registerRequest = (firstName, lastName, email, phoneNumber, password) =>
   api
-    .post("/auth/register", { full_name: fullName, email, password })
+    .post("/auth/register", { 
+      first_name: firstName,
+      last_name: lastName,
+      email: email.toLowerCase(),
+      phone_number: phoneNumber,
+      password,
+      confirm_password: password
+    })
     .then((res) => res.data);
 
 export const fetchCurrentUserRequest = () =>
