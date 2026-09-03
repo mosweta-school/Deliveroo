@@ -42,7 +42,7 @@ class Config:
     CORS_ORIGINS = [o.strip() for o in cors_origins.split(",") if o.strip()]
     
     # Redis Configuration
-    REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+    REDIS_URL = os.getenv("REDIS_URL","rediss://default:gQAAAAAAAcWJAAIgcDI3ZjliMTc2YTdjNTE0NzdiYWY3NDczNTcwY2Y5ZmNhZA@gentle-jaguar-116105.upstash.io:6379")
     REDIS_LOCATION_EXPIRY = 60  # Location cache expiry in seconds
     REDIS_SESSION_EXPIRY = 3600  # Session expiry in seconds
 

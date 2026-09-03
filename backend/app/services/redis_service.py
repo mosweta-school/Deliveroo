@@ -21,9 +21,9 @@ class RedisService:
         
         try:
             import redis
-            redis_url = 'redis://localhost:6379/0'
+            redis_url = 'redis://localhost:6379/0 || rediss://default:gQAAAAAAAcWJAAIgcDI3ZjliMTc2YTdjNTE0NzdiYWY3NDczNTcwY2Y5ZmNhZA@gentle-jaguar-116105.upstash.io:6379'
             try:
-                redis_url = current_app.config.get('REDIS_URL', 'redis://localhost:6379/0')
+                redis_url = current_app.config.get('REDIS_URL', 'redis://localhost:6379/0','rediss://default:gQAAAAAAAcWJAAIgcDI3ZjliMTc2YTdjNTE0NzdiYWY3NDczNTcwY2Y5ZmNhZA@gentle-jaguar-116105.upstash.io:6379')
             except RuntimeError:
                 pass
             
