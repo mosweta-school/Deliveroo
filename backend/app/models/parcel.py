@@ -1,5 +1,5 @@
-# app/models/parcel.py
-import uuid  # Add this import
+# backend/app/models/parcel.py
+import uuid
 from datetime import datetime
 from app.extensions import db
 
@@ -13,6 +13,7 @@ class Parcel(db.Model):
 
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     user_id = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=False)
+    rider_id = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=True)
     pickup_location_id = db.Column(
         db.String(36), db.ForeignKey("locations.id"), nullable=False
     )
@@ -29,19 +30,22 @@ class Parcel(db.Model):
         db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
     )
 
-    # Relationships with overlaps to fix warnings
+    # --- FIX: Use consistent back_populates for all relationships ---
+    user = db.relationship('User', foreign_keys=[user_id], back_populates='parcels')
+    rider = db.relationship('User', foreign_keys=[rider_id], back_populates='assigned_parcels')
     pickup_location = db.relationship(
         "Location", 
         foreign_keys=[pickup_location_id],
-        overlaps="pickup_location_ref,pickup_parcels"  # Add this
+        overlaps="pickup_location_ref,pickup_parcels"
     )
     destination = db.relationship(
         "Location", 
         foreign_keys=[destination_id],
-        overlaps="destination_ref,destination_parcels"  # Add this
+        overlaps="destination_ref,destination_parcels"
     )
-    status_history = db.relationship("ParcelStatusHistory", backref="parcel", lazy=True)
-    notifications = db.relationship("Notification", backref="parcel", lazy=True)
+    status_history = db.relationship("ParcelStatusHistory", back_populates="parcel", lazy=True)
+    notifications = db.relationship("Notification", back_populates="parcel", lazy=True)
+    # --- END FIX ---
 
     def to_dict(self):
         pickup = self.pickup_location.to_dict() if self.pickup_location else None
@@ -49,6 +53,7 @@ class Parcel(db.Model):
         return {
             "id": self.id,
             "user_id": self.user_id,
+            "rider_id": self.rider_id,
             "tracking_number": self.tracking_number,
             "pickup_location": pickup,
             "destination": dest,
@@ -58,10 +63,12 @@ class Parcel(db.Model):
             "status": self.status,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            "user": self.user.to_dict() if self.user else None,
+            "rider": self.rider.to_dict() if self.rider else None
         }
 
     def is_delivered(self):
         return self.status == "Delivered"
 
     def is_cancelable(self):
-        return self.status in ("Pending", "In Transit", "Picked Up")                                                                                                                                                                                  
+        return self.status in ("Pending", "In Transit", "Picked Up")

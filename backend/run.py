@@ -1,16 +1,15 @@
-"""
-Local development entry point.
-
-    python run.py
-
-For everyday dev, `flask --app wsgi run --debug` also works and is what the
-`flask db ...` migration commands expect FLASK_APP to point to — but this
-file is a convenient one-command alternative during development.
-"""
-
+# backend/run.py
 from app import create_app
+from app.extensions import socketio
 
 app = create_app()
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8000, debug=True)
+    # Use socketio.run instead of app.run
+    socketio.run(
+        app, 
+        host="0.0.0.0", 
+        port=8000, 
+        debug=True,
+        allow_unsafe_werkzeug=True  # Add this for development
+    )

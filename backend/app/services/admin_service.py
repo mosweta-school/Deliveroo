@@ -42,6 +42,7 @@ def update_parcel_status(parcel_id, admin_id, status_data):
         user_id=parcel.user_id,
         parcel_id=parcel.id,
         type="status_update",
+        title=f"Parcel {parcel.tracking_number} Location Update",
         message=f"Your parcel {parcel.tracking_number} status changed from {old_status} to {new_status}",
         is_read=False
     )
@@ -99,6 +100,7 @@ def update_parcel_location(parcel_id, admin_id, location_data):
         user_id=parcel.user_id,
         parcel_id=parcel.id,
         type="location_update",
+        title=f"Parcel {parcel.tracking_number} Location Update",
         message=f"Your parcel {parcel.tracking_number} is now at {location_data.get('address', 'N/A')}",
         is_read=False
     )

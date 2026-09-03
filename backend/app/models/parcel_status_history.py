@@ -1,4 +1,4 @@
-# app/models/parcel_status_history.py
+# backend/app/models/parcel_status_history.py
 import uuid
 from datetime import datetime
 from app.extensions import db
@@ -12,6 +12,11 @@ class ParcelStatusHistory(db.Model):
     updated_by = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=False)
     remarks = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # --- FIX: Add proper relationship with back_populates ---
+    parcel = db.relationship('Parcel', back_populates='status_history', lazy=True)
+    updated_by_user = db.relationship('User', back_populates='status_updates', lazy=True)
+    # --- END FIX ---
 
     def to_dict(self):
         return {

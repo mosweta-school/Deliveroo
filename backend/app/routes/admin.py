@@ -1,7 +1,8 @@
 # app/routes/admin.py
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from flasgger import swag_from
+from app.extensions import db 
 from app.services.admin_service import (
     update_parcel_status, 
     update_parcel_location, 
@@ -9,6 +10,8 @@ from app.services.admin_service import (
 )
 from app.models.user import User
 from app.models.parcel import Parcel
+from app.models.parcel_status_history import ParcelStatusHistory
+from datetime import datetime
 
 admin_bp = Blueprint("admin", __name__)
 
@@ -294,4 +297,262 @@ def get_all_parcels():
         "page": page,
         "per_page": per_page,
         "pages": paginated.pages
+    }), 200
+
+
+# NEW: Activities endpoint - Fixed with current_app
+@admin_bp.route("/activities", methods=["GET"])
+@jwt_required()
+@swag_from({
+    'tags': ['Admin'],
+    'summary': 'Get recent activities',
+    'description': 'Get a list of recent parcel status change activities (Admin only)',
+    'security': [{'Bearer': []}],
+    'parameters': [
+        {
+            'name': 'limit',
+            'in': 'query',
+            'type': 'integer',
+            'default': 10,
+            'description': 'Number of activities to return'
+        }
+    ],
+    'responses': {
+        200: {
+            'description': 'Activities retrieved successfully',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'success': {'type': 'boolean'},
+                    'activities': {
+                        'type': 'array',
+                        'items': {
+                            'type': 'object',
+                            'properties': {
+                                'id': {'type': 'string'},
+                                'status': {'type': 'string'},
+                                'created_at': {'type': 'string'},
+                                'parcel': {
+                                    'type': 'object',
+                                    'properties': {
+                                        'id': {'type': 'string'},
+                                        'tracking_number': {'type': 'string'}
+                                    }
+                                },
+                                'updated_by': {
+                                    'type': 'object',
+                                    'properties': {
+                                        'id': {'type': 'string'},
+                                        'full_name': {'type': 'string'}
+                                    }
+                                },
+                                'location': {'type': 'string'}
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        403: {'description': 'Admin access required'}
+    }
+})
+def get_activities():
+    """Get recent activities (Admin only)"""
+    if not is_admin():
+        return jsonify({"error": "Admin access required"}), 403
+
+    limit = request.args.get("limit", 10, type=int)
+    
+    try:
+        # Get recent status history entries
+        history = ParcelStatusHistory.query.order_by(
+            ParcelStatusHistory.created_at.desc()
+        ).limit(limit).all()
+        
+        activities = []
+        for entry in history:
+            # Get parcel info
+            parcel = Parcel.query.get(entry.parcel_id)
+            # Get user info
+            user = User.query.get(entry.updated_by)
+            
+            activities.append({
+                "id": entry.id,
+                "status": entry.status,
+                "created_at": entry.created_at.isoformat() if entry.created_at else None,
+                "parcel": {
+                    "id": parcel.id if parcel else None,
+                    "tracking_number": parcel.tracking_number if parcel else None
+                },
+                "updated_by": {
+                    "id": user.id if user else None,
+                    "full_name": user.full_name if user else None
+                },
+                "location": entry.remarks or "N/A"
+            })
+        
+        return jsonify({
+            "success": True,
+            "activities": activities
+        }), 200
+        
+    except Exception as e:
+        # Use current_app instead of app
+        current_app.logger.error(f"Error fetching activities: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": "Failed to fetch activities",
+            "activities": []
+        }), 500
+
+    # Add to app/routes/admin.py
+@admin_bp.route("/couriers", methods=["GET"])
+@jwt_required()
+def get_couriers():
+    """Get all couriers (Admin only)"""
+    if not is_admin():
+        return jsonify({"error": "Admin access required"}), 403
+    
+    # You'll need a Courier model
+    # For now, return empty array or mock data
+    return jsonify({
+        "success": True,
+        "couriers": []
+    }), 200
+
+# backend/app/routes/admin.py - Add driver endpoints
+
+@admin_bp.route("/drivers", methods=["GET"])
+@jwt_required()
+@swag_from({
+    'tags': ['Admin'],
+    'summary': 'Get all drivers',
+    'description': 'Get a list of all users with role "driver" (Admin only)',
+    'security': [{'Bearer': []}],
+    'responses': {
+        200: {
+            'description': 'Drivers retrieved successfully',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'success': {'type': 'boolean'},
+                    'drivers': {'type': 'array'}
+                }
+            }
+        },
+        403: {'description': 'Admin access required'}
+    }
+})
+def get_drivers():
+    """Get all users with role 'driver' (Admin only)"""
+    if not is_admin():
+        return jsonify({"error": "Admin access required"}), 403
+    
+    # Get all users with role 'driver'
+    drivers = User.query.filter_by(role='driver').all()
+    
+    return jsonify({
+        "success": True,
+        "drivers": [driver.to_dict() for driver in drivers]
+    }), 200
+
+
+@admin_bp.route("/drivers/<driver_id>/status", methods=["PUT"])
+@jwt_required()
+@swag_from({
+    'tags': ['Admin'],
+    'summary': 'Update driver status',
+    'description': 'Update the status of a driver (Admin only)',
+    'security': [{'Bearer': []}],
+    'parameters': [
+        {
+            'name': 'driver_id',
+            'in': 'path',
+            'type': 'string',
+            'required': True,
+            'description': 'Driver ID'
+        },
+        {
+            'name': 'body',
+            'in': 'body',
+            'required': True,
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'status': {
+                        'type': 'string',
+                        'enum': ['Available', 'Delivering', 'Offline', 'On Break'],
+                        'example': 'Available'
+                    }
+                },
+                'required': ['status']
+            }
+        }
+    ],
+    'responses': {
+        200: {
+            'description': 'Driver status updated successfully',
+            'schema': {'type': 'object'}
+        },
+        403: {'description': 'Admin access required'},
+        404: {'description': 'Driver not found'}
+    }
+})
+def update_driver_status(driver_id):
+    """Update driver status (Admin only)"""
+    if not is_admin():
+        return jsonify({"error": "Admin access required"}), 403
+    
+    data = request.get_json()
+    if not data or "status" not in data:
+        return jsonify({"error": "Status is required"}), 400
+    
+    driver = User.query.get(driver_id)
+    if not driver:
+        return jsonify({"error": "Driver not found"}), 404
+    
+    if driver.role != 'driver':
+        return jsonify({"error": "User is not a driver"}), 400
+    
+    # You might want to store driver status in a separate field or table
+    # For now, we'll use a custom field or you can add a 'status' field to User model
+    # This is a placeholder - you'll need to add a status field to the User model
+    # or create a separate Driver model
+    
+    return jsonify({
+        "success": True,
+        "message": "Driver status updated successfully",
+        "driver": driver.to_dict()
+    }), 200
+
+@admin_bp.route("/parcels/<parcel_id>/assign-rider", methods=["PUT"])
+@jwt_required()
+def assign_rider(parcel_id):
+    """Assign a rider to a parcel (Admin only)"""
+    if not is_admin():
+        return jsonify({"error": "Admin access required"}), 403
+
+    data = request.get_json()
+    if not data or "rider_id" not in data:
+        return jsonify({"error": "rider_id is required"}), 400
+
+    parcel = Parcel.query.get(parcel_id)
+    if not parcel:
+        return jsonify({"error": "Parcel not found"}), 404
+
+    rider = User.query.get(data["rider_id"])
+    if not rider:
+        return jsonify({"error": "Rider not found"}), 404
+
+    if rider.role != 'driver':
+        return jsonify({"error": "User is not a driver"}), 400
+
+    parcel.rider_id = rider.id
+    parcel.updated_at = datetime.utcnow()
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "message": "Rider assigned successfully",
+        "parcel": parcel.to_dict()
     }), 200

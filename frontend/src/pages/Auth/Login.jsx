@@ -1,7 +1,8 @@
-// pages/Login.jsx
+// frontend/src/pages/Auth/Login.jsx
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Truck, Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { authService } from '../../services/authService';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -13,64 +14,53 @@ const Login = () => {
     password: ''
   });
 
-  // Predefined users for demo
-  const users = [
-    {
-      id: '1',
-      name: 'James Mwangi',
-      email: 'jamesmwangi@deliveroo.com',
-      password: 'admin123',
-      role: 'admin',
-      phone: '+254 712 345 678',
-      avatar: 'JM'
-    },
-    {
-      id: '2',
-      name: 'Jane Muthoni',
-      email: 'janemuthoni@gmail.com',
-      password: 'customer123',
-      role: 'customer',
-      phone: '+254 723 456 789',
-      avatar: 'JM'
-    }
-  ];
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      // Find user by email and password
-      const user = users.find(
-        u => u.email === formData.email && u.password === formData.password
-      );
-
-      if (user) {
-        // Store user data in localStorage for persistence
-        localStorage.setItem('token', `mock-jwt-token-${user.id}`);
-        localStorage.setItem('user', JSON.stringify({
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          phone: user.phone,
-          avatar: user.avatar
-        }));
+    try {
+      const response = await authService.login(formData.email, formData.password);
+      
+      if (response.success) {
+        // Store user data and token
+        localStorage.setItem('token', response.access_token);
+        localStorage.setItem('user', JSON.stringify(response.user));
 
         // Navigate based on role
-        if (user.role === 'admin') {
+        if (response.user.role === 'admin') {
           navigate('/admin');
         } else {
           navigate('/customer');
         }
       } else {
-        setError('Invalid email or password. Please try again.');
+        setError(response.message || 'Login failed. Please try again.');
       }
+    } catch (err) {
+      console.error('Login error:', err);
+      setError(err.response?.data?.message || 'Invalid email or password. Please try again.');
+    } finally {
       setLoading(false);
-    }, 800);
+    }
   };
+
+  // Predefined users for demo (optional - can be removed in production)
+  const demoUsers = [
+    {
+      id: '1',
+      name: 'James Mwangi',
+      email: 'admin@deliveroo.com',
+      password: 'admin123',
+      role: 'admin'
+    },
+    {
+      id: '2',
+      name: 'Jane Muthoni',
+      email: 'customer@deliveroo.com',
+      password: 'customer123',
+      role: 'customer'
+    }
+  ];
 
   const handleQuickLogin = (user) => {
     setFormData({
@@ -146,9 +136,9 @@ const Login = () => {
               <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
               <span className="text-slate-600">Remember me</span>
             </label>
-            <button type="button" className="text-blue-600 hover:underline">
+            <Link to="/forgotpassword" className="text-blue-600 hover:underline">
               Forgot password?
-            </button>
+            </Link>
           </div>
 
           <button
@@ -170,7 +160,7 @@ const Login = () => {
           </button>
         </form>
 
-        {/* Quick Login - Demo Users */}
+        {/* Quick Login - Demo Users (Optional - remove in production) */}
         <div className="mt-6">
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
@@ -185,32 +175,32 @@ const Login = () => {
             {/* Admin Login */}
             <button
               type="button"
-              onClick={() => handleQuickLogin(users[0])}
+              onClick={() => handleQuickLogin(demoUsers[0])}
               className="p-3 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-colors text-left"
             >
               <div className="flex items-center gap-2 mb-1">
                 <div className="h-6 w-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-semibold">
-                  {users[0].avatar}
+                  A
                 </div>
                 <span className="text-xs font-semibold text-blue-700">Admin</span>
               </div>
-              <p className="text-xs text-slate-600 truncate">{users[0].email}</p>
+              <p className="text-xs text-slate-600 truncate">{demoUsers[0].email}</p>
               <p className="text-xs text-slate-400 font-mono">••••••••</p>
             </button>
 
             {/* Customer Login */}
             <button
               type="button"
-              onClick={() => handleQuickLogin(users[1])}
+              onClick={() => handleQuickLogin(demoUsers[1])}
               className="p-3 bg-green-50 hover:bg-green-100 border border-green-200 rounded-lg transition-colors text-left"
             >
               <div className="flex items-center gap-2 mb-1">
                 <div className="h-6 w-6 rounded-full bg-green-600 text-white flex items-center justify-center text-xs font-semibold">
-                  {users[1].avatar}
+                  C
                 </div>
                 <span className="text-xs font-semibold text-green-700">Customer</span>
               </div>
-              <p className="text-xs text-slate-600 truncate">{users[1].email}</p>
+              <p className="text-xs text-slate-600 truncate">{demoUsers[1].email}</p>
               <p className="text-xs text-slate-400 font-mono">••••••••</p>
             </button>
           </div>
