@@ -1,8 +1,8 @@
 # backend/app/__init__.py
 import os
 
-from flask import Flask, jsonify
-from flasgger import Swagger
+from flask import Flask, jsonify, send_from_directory
+from flasgger import Swagger, swag_from
 
 from app.config import config_map
 from app.errors import register_error_handlers
@@ -111,6 +111,16 @@ def create_app(config_name: str | None = None) -> Flask:
     
 
     from app import socket_events  # noqa: F401
+
+    # --- M-Pesa STK Push ---
+    from app.routes.mpesa import mpesa_bp
+    app.register_blueprint(mpesa_bp, url_prefix="/mpesa")
+
+
+
+    @app.route("/swagger.yaml")
+    def swagger_yaml():
+        return send_from_directory('/home/allan-kimani/Deliveroo/backend', 'swagger.yaml', mimetype='text/yaml')
 
     @app.route("/")
     def root():

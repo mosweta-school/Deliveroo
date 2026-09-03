@@ -72,3 +72,4 @@ class Parcel(db.Model):
 
     def is_cancelable(self):
         return self.status in ("Pending", "In Transit", "Picked Up")
+                                                                                                                                                                                
