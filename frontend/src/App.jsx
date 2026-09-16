@@ -41,7 +41,7 @@ function App() {
         </Route>
 
         {/* Protected Admin Routes */}
-        <Route element={<MainLayout />}>
+        <Route element={<NavbarLayout />}>
         <Route 
           path="/admin/*" 
           element={
