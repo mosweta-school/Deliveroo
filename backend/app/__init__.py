@@ -110,6 +110,7 @@ def create_app(config_name: str | None = None) -> Flask:
     from app.routes.notification import notification_bp
     from app.routes.rider import rider_bp
     from app.routes.customer import customer_bp
+    from app.routes.payment import payment_bp
 
 
     app.register_blueprint(auth_bp, url_prefix="/auth")
@@ -118,6 +119,7 @@ def create_app(config_name: str | None = None) -> Flask:
     app.register_blueprint(notification_bp, url_prefix="/notifications")
     app.register_blueprint(rider_bp, url_prefix="/rider") 
     app.register_blueprint(customer_bp, url_prefix="/customer")
+    app.register_blueprint(payment_bp, url_prefix="/payments")
     
 
     from app import socket_events  # noqa: F401

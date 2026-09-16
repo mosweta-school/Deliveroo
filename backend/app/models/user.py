@@ -37,6 +37,7 @@ class User(db.Model):
     assigned_parcels = db.relationship('Parcel', foreign_keys='Parcel.rider_id', back_populates='rider', lazy=True)
     notifications = db.relationship('Notification', back_populates='user', lazy=True)
     status_updates = db.relationship('ParcelStatusHistory', back_populates='updated_by_user', lazy=True)
+    payments = db.relationship('Payment', back_populates='user', lazy=True)
     # --- END FIX ---
     
     def set_password(self, password):

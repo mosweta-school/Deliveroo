@@ -16,7 +16,6 @@ class SocketService {
   }
 
   connect() {
-    // Prevent multiple connection attempts
     if (this.isConnecting) {
       console.log('🔌 Connection already in progress');
       return;
@@ -40,11 +39,10 @@ class SocketService {
     }
 
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-    
+
     console.log('🔌 Connecting to socket...');
     this.isConnecting = true;
 
-    // Close existing socket if any
     if (this.socket) {
       this.socket.disconnect();
       this.socket = null;
@@ -58,61 +56,59 @@ class SocketService {
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
       timeout: 20000,
-      forceNew: true
+      forceNew: true,
     });
 
-    // --- FIX: Use separate handler methods to avoid 'this' binding issues ---
-    this.socket.on('connect', () => {
-      this._handleConnect();
-    });
+    this.socket.on('connect', () => this._handleConnect());
+    this.socket.on('disconnect', () => this._handleDisconnect());
+    this.socket.on('connect_error', (error) => this._handleConnectError(error));
+    this.socket.on('reconnect', () => this._handleReconnect());
 
-    this.socket.on('disconnect', () => {
-      this._handleDisconnect();
-    });
-
-    this.socket.on('connect_error', (error) => {
-      this._handleConnectError(error);
-    });
-
-    this.socket.on('reconnect', () => {
-      this._handleReconnect();
-    });
-
-    // --- FIX: Set up event forwarding correctly ---
+    // Forward server pushes to local listeners
     this.socket.on('rider_location_update', (data) => {
       this._emitEvent('rider_location_update', data);
     });
-
     this.socket.on('all_rider_locations', (data) => {
       this._emitEvent('all_rider_locations', data);
     });
-
     this.socket.on('rider_offline', (data) => {
       this._emitEvent('rider_offline', data);
     });
-
+    this.socket.on('new_notification', (data) => {
+      this._emitEvent('new_notification', data);
+    });
     this.socket.on('authenticate_response', (data) => {
       this._emitEvent('authenticate_response', data);
     });
 
     // Forward any other registered listeners
-    Object.keys(this.listeners).forEach(event => {
-      if (this.socket && !['rider_location_update', 'all_rider_locations', 'rider_offline', 'authenticate_response'].includes(event)) {
+    Object.keys(this.listeners).forEach((event) => {
+      if (
+        this.socket &&
+        ![
+          'rider_location_update',
+          'all_rider_locations',
+          'rider_offline',
+          'new_notification',
+          'authenticate_response',
+        ].includes(event)
+      ) {
         this.socket.on(event, this.listeners[event]);
       }
     });
   }
 
-  // --- FIX: Separate handler methods ---
   _handleConnect() {
     console.log('🔌 Socket connected successfully');
     this.connected = true;
     this.isConnecting = false;
     this.reconnectAttempts = 0;
-    
-    // Authenticate with server
+
     if (this.userId && this.role) {
-      this.socket.emit('authenticate', { user_id: this.userId, role: this.role });
+      this.socket.emit('authenticate', {
+        user_id: this.userId,
+        role: this.role,
+      });
     }
   }
 
@@ -127,7 +123,7 @@ class SocketService {
     this.connected = false;
     this.isConnecting = false;
     this.reconnectAttempts++;
-    
+
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
       console.log('🔌 Max reconnect attempts reached, trying polling only...');
       if (this.socket) {
@@ -142,16 +138,23 @@ class SocketService {
     this.connected = true;
     this.isConnecting = false;
     this.reconnectAttempts = 0;
-    
+
     // Re-authenticate on reconnect
     if (this.userId && this.role) {
-      this.socket.emit('authenticate', { user_id: this.userId, role: this.role });
+      this.socket.emit('authenticate', {
+        user_id: this.userId,
+        role: this.role,
+      });
     }
+
+    // Notify listeners that a reconnect happened so they can resync
+    // state that may have changed while we were offline.
+    this._emitEvent('socket_reconnected', { at: Date.now() });
   }
 
   _emitEvent(event, data) {
     const listeners = this.listeners[event] || [];
-    listeners.forEach(callback => {
+    listeners.forEach((callback) => {
       try {
         callback(data);
       } catch (error) {
@@ -174,8 +177,7 @@ class SocketService {
       this.listeners[event] = [];
     }
     this.listeners[event].push(callback);
-    
-    // Also register on socket if already connected
+
     if (this.socket) {
       this.socket.on(event, callback);
     }
@@ -192,10 +194,9 @@ class SocketService {
     if (this.socket && this.socket.connected) {
       this.socket.emit(event, data);
       return true;
-    } else {
-      console.warn('🔌 Socket not connected, unable to emit:', event);
-      return false;
     }
+    console.warn('🔌 Socket not connected, unable to emit:', event);
+    return false;
   }
 
   isConnected() {
@@ -204,12 +205,12 @@ class SocketService {
 
   // Rider methods
   updateLocation(latitude, longitude, status = 'online', speed = 0) {
-    return this.emit('update_location', { 
+    return this.emit('update_location', {
       user_id: this.userId,
-      latitude, 
-      longitude, 
-      status, 
-      speed 
+      latitude,
+      longitude,
+      status,
+      speed,
     });
   }
 
@@ -227,10 +228,8 @@ class SocketService {
   }
 }
 
-// Create singleton instance
 export const socketService = new SocketService();
 
-// Expose to window for debugging
 if (typeof window !== 'undefined') {
   window.socketService = socketService;
 }

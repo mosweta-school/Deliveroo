@@ -25,3 +25,4 @@ from app.models.location import Location
 from app.models.parcel import Parcel
 from app.models.parcel_status_history import ParcelStatusHistory
 from app.models.notification import Notification
+from app.models.payment import Payment
